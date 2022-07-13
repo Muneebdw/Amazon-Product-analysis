@@ -36,22 +36,45 @@ def rev_data(soup):
         rev_list.append(data_str)
         data_str = ""
     return rev_list
+
+def get_stars(soup):
+    data_str = ""
+    stars_list = []
+    for item in soup.find_all("span", class_="a-icon-alt"):
+        data_str = data_str + item.get_text()
+        stars_list.append(data_str)
+        data_str = ""
+    return stars_list
+
+def gather(url):
+    data = get_html(url)
+    soup = soupify(data)
+
+    #scrape class a-profile-name
+    names = cus_data(soup)
+    reviews = rev_data(soup)
+    stars = get_stars(soup)
+
+    #remove any elements not containing "stars" in stars
+    stars = [x for x in stars if "stars" in x]
+    #only save the first string
+    stars = [x.split()[0] for x in stars]
+    #convert to float
+    stars = [float(x) for x in stars]
+
+    #Save Name + Review in csv
+    with open('reviews.csv', 'w' , encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Name', 'Review','Stars'])
+        for i in range(len(reviews)):
+            writer.writerow([names[i+1], reviews[i], stars[i]])
+
+    #convert csv to xlss
+    import pandas as pd
+    df = pd.read_csv('reviews.csv')
+    df.to_excel('reviews.xlsx', index=False)
+
+
+#here
 url = 'https://www.amazon.com/MSI-Stealth-15M-Gaming-Laptop/dp/B091GGZT1S/ref=sr_1_1_sspa?crid=8SMPWBFYO1OF&keywords=gaming+laptop&qid=1657708306&smid=ATVPDKIKX0DER&sprefix=gaming%2Caps%2C471&sr=8-1-spons&psc=1&spLa=ZW5jcnlwdGVkUXVhbGlmaWVyPUEyR1NCVkZGRzRZMzI2JmVuY3J5cHRlZElkPUEwODA5NTQ1TjRaTlhLNldHSTNOJmVuY3J5cHRlZEFkSWQ9QTA5NDE1ODAyVUpTSzFFQzc2UFBMJndpZGdldE5hbWU9c3BfYXRmJmFjdGlvbj1jbGlja1JlZGlyZWN0JmRvTm90TG9nQ2xpY2s9dHJ1ZQ=='
-data = get_html(url)
-soup = soupify(data)
-
-#scrape class a-profile-name
-names = cus_data(soup)
-reviews = rev_data(soup)
-
-#Save Name + Review in csv
-with open('reviews.csv', 'w' , encoding='utf-8') as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow(['Name', 'Review'])
-    for i in range(len(reviews)):
-        writer.writerow([names[i+1], reviews[i]])
-
-#convert csv to xlss
-import pandas as pd
-df = pd.read_csv('reviews.csv')
-df.to_excel('reviews.xlsx', index=False)
+gather(url)
